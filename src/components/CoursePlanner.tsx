@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { filterChinese, filterChineseAndNumbers } from "@/lib/utils";
 
 interface ExcelRow {
   [key: string]: string | number | undefined;
@@ -13,6 +14,9 @@ interface Course {
   cou_cname: string;
   tea_cname: string;
   credit: string;
+  day: number;
+  time: string;
+  classroom: string;
 }
 
 export function CoursePlanner() {
@@ -33,27 +37,39 @@ export function CoursePlanner() {
         // Convert to JSON
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        // Filter and map the data to only include the required fields
-        const filteredCourses = (jsonData as ExcelRow[])
+        const filteredCourses: Course[] = (jsonData as ExcelRow[])
           .map((row: ExcelRow) => {
-            // Remove English characters from course name, keep only Chinese/Mandarin text
-            let cleanCourseName = row.cou_cname?.toString() || "";
+            const cleanCourseName = filterChinese(
+              row.cou_cname?.toString() || ""
+            );
 
-            // Remove English text (including hyphens, spaces, and other punctuation that might follow English text)
-            // This will keep only Chinese characters and remove everything after English text
-            const chineseOnly = cleanCourseName.match(/[\u4e00-\u9fff]+/);
-            if (chineseOnly) {
-              cleanCourseName = chineseOnly.join("");
-            }
+            const cleanTeacherName = filterChinese(
+              row.tea_cname?.toString() || ""
+            );
 
-            // Remove English characters and numbers from teacher name, keep only Chinese/Mandarin text
-            let cleanTeacherName = row.tea_cname?.toString() || "";
+            const classroom =
+              row.clsrom_1 ||
+              row.clsrom_2 ||
+              row.clsrom_3 ||
+              row.clsrom_4 ||
+              row.clsrom_5 ||
+              row.clsrom_6 ||
+              "";
+            const cleanClassroom = filterChineseAndNumbers(
+              classroom.toString()
+            );
 
-            // Remove English text, numbers, and punctuation, keep only Chinese characters
-            const teacherChineseOnly =
-              cleanTeacherName.match(/[\u4e00-\u9fff]+/);
-            if (teacherChineseOnly) {
-              cleanTeacherName = teacherChineseOnly.join("");
+            let day = 0;
+            let time = "";
+
+            for (let i = 1; i <= 5; i++) {
+              const dayKey = `day${i}` as keyof ExcelRow;
+              const dayValue = row[dayKey]?.toString();
+              if (dayValue && dayValue.trim() !== "") {
+                day = i;
+                time = dayValue;
+                break;
+              }
             }
 
             return {
@@ -61,9 +77,12 @@ export function CoursePlanner() {
               cou_cname: cleanCourseName,
               tea_cname: cleanTeacherName,
               credit: row.credit?.toString() || "",
+              day,
+              time,
+              classroom: cleanClassroom,
             };
           })
-          .filter(course => course.cou_cname && course.tea_cname); // Filter out empty courses
+          .filter(course => course.cou_cname && course.tea_cname);
 
         setCourses(filteredCourses);
       } catch (error) {
@@ -98,31 +117,48 @@ export function CoursePlanner() {
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {courses.map((course, index) => (
           <Card
             key={index}
             className="hover:shadow-lg transition-shadow duration-200"
           >
-            <CardContent className="p-6">
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-2">
-                  <Badge variant="secondary" className="text-sm">
-                    {course.ser_no}
-                  </Badge>
-                </div>
-                <div className="col-span-5">
+            <CardContent className="p-3">
+              <div className="grid grid-cols-12 gap-3 items-center">
+                <div className="col-span-6">
                   <h3 className="font-semibold text-lg">{course.cou_cname}</h3>
+                  <div className="flex flex-col gap-1 mt-1">
+                    {course.day !== 0 && course.time && (
+                      <Badge
+                        variant="outline"
+                        className="text-sm text-gray-600 w-fit"
+                      >
+                        {["一", "二", "三", "四", "五"][course.day - 1]}{" "}
+                        {course.time}
+                      </Badge>
+                    )}
+                    {course.classroom && (
+                      <Badge
+                        variant="outline"
+                        className="text-sm text-gray-500 w-fit"
+                      >
+                        {course.classroom}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                <div className="col-span-3">
-                  <span className="text-gray-600">{course.tea_cname}</span>
-                </div>
-                <div className="col-span-1">
+                <div className="col-span-3 flex flex-col gap-1">
+                  <Badge variant="secondary" className="text-sm w-fit">
+                    流水號：{course.ser_no}
+                  </Badge>
                   <Badge variant="outline" className="text-sm">
-                    {course.credit}
+                    授課教師：{course.tea_cname}
+                  </Badge>
+                  <Badge variant="outline" className="text-sm w-fit">
+                    學分：{course.credit}
                   </Badge>
                 </div>
-                <div className="col-span-1 flex gap-2">
+                <div className="col-span-3 flex gap-2">
                   <Button variant="outline" size="sm">
                     View
                   </Button>
