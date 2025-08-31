@@ -1,4 +1,3 @@
-import React from "react";
 import { CoursePlanner } from "./components/CoursePlanner";
 
 function App() {
