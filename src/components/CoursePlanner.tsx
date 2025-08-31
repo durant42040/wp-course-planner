@@ -3,6 +3,15 @@ import * as XLSX from "xlsx";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "./ui/pagination";
 import { filterChinese, filterChineseAndNumbers } from "@/lib/utils";
 
 interface ExcelRow {
@@ -22,6 +31,8 @@ interface Course {
 export function CoursePlanner() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 15;
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -95,6 +106,12 @@ export function CoursePlanner() {
     loadCourses();
   }, []);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(courses.length / coursesPerPage);
+  const startIndex = (currentPage - 1) * coursesPerPage;
+  const endIndex = startIndex + coursesPerPage;
+  const currentCourses = courses.slice(startIndex, endIndex);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -118,9 +135,9 @@ export function CoursePlanner() {
       </div>
 
       <div className="space-y-2">
-        {courses.map((course, index) => (
+        {currentCourses.map((course, index) => (
           <Card
-            key={index}
+            key={startIndex + index}
             className="hover:shadow-lg transition-shadow duration-200"
           >
             <CardContent className="p-3">
@@ -176,6 +193,129 @@ export function CoursePlanner() {
             No courses found. Please check the Excel file.
           </p>
         </div>
+      )}
+
+      {/* Pagination */}
+      {courses.length > 0 && (
+        <Pagination className="mt-8">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={e => {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.max(prev - 1, 1));
+                }}
+                className={
+                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                }
+              />
+            </PaginationItem>
+
+            {(() => {
+              const pages = [];
+              const maxVisiblePages = 3;
+              let startPage = Math.max(
+                1,
+                currentPage - Math.floor(maxVisiblePages / 2)
+              );
+              const endPage = Math.min(
+                totalPages,
+                startPage + maxVisiblePages - 1
+              );
+
+              // Adjust start page if we're near the end
+              if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+              }
+
+              // Add first page and ellipsis if needed
+              if (startPage > 1) {
+                pages.push(
+                  <PaginationItem key={1}>
+                    <PaginationLink
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        setCurrentPage(1);
+                      }}
+                    >
+                      1
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+
+                if (startPage > 2) {
+                  pages.push(
+                    <PaginationItem key="ellipsis-start">
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+              }
+
+              // Add visible page numbers
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === i}
+                      onClick={e => {
+                        e.preventDefault();
+                        setCurrentPage(i);
+                      }}
+                    >
+                      {i}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              }
+
+              // Add last page and ellipsis if needed
+              if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                  pages.push(
+                    <PaginationItem key="ellipsis-end">
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+
+                pages.push(
+                  <PaginationItem key={totalPages}>
+                    <PaginationLink
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        setCurrentPage(totalPages);
+                      }}
+                    >
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              }
+
+              return pages;
+            })()}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={e => {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                }}
+                className={
+                  currentPage === totalPages
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   );
