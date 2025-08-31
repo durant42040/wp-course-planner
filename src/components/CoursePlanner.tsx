@@ -3,6 +3,8 @@ import * as XLSX from "xlsx";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Spinner } from "./ui/shadcn-io/spinner";
 import {
   Pagination,
   PaginationContent,
@@ -32,7 +34,8 @@ export function CoursePlanner() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const coursesPerPage = 15;
+  const [searchTerm, setSearchTerm] = useState("");
+  const coursesPerPage = 10;
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -106,17 +109,29 @@ export function CoursePlanner() {
     loadCourses();
   }, []);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(courses.length / coursesPerPage);
+  const filteredCourses = courses.filter(
+    course =>
+      course.cou_cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.tea_cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.ser_no.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
   const startIndex = (currentPage - 1) * coursesPerPage;
   const endIndex = startIndex + coursesPerPage;
-  const currentCourses = courses.slice(startIndex, endIndex);
+  const currentCourses = filteredCourses.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <div className="flex justify-center">
+            <Spinner />
+          </div>
           <p className="mt-4 text-lg">Loading courses...</p>
         </div>
       </div>
@@ -132,6 +147,17 @@ export function CoursePlanner() {
         <p className="text-lg text-gray-600">
           Plan your academic journey with our comprehensive course catalog
         </p>
+      </div>
+
+      {/* Search Input */}
+      <div className="mb-6 max-w-md mx-auto">
+        <Input
+          type="text"
+          placeholder="Search course name, teacher, or serial number"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full"
+        />
       </div>
 
       <div className="space-y-2">
@@ -187,16 +213,18 @@ export function CoursePlanner() {
         ))}
       </div>
 
-      {courses.length === 0 && (
+      {filteredCourses.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            No courses found. Please check the Excel file.
+            {searchTerm
+              ? `No courses found matching "${searchTerm}"`
+              : "No courses found. Please check the Excel file."}
           </p>
         </div>
       )}
 
       {/* Pagination */}
-      {courses.length > 0 && (
+      {filteredCourses.length > 0 && (
         <Pagination className="mt-8">
           <PaginationContent>
             <PaginationItem>
