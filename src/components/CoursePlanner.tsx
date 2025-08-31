@@ -14,12 +14,6 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "./ui/pagination";
-import { filterChinese, filterChineseAndNumbers } from "@/lib/utils";
-
-interface ExcelRow {
-  [key: string]: string | number | undefined;
-}
-
 interface Course {
   ser_no: string;
   cou_cname: string;
@@ -37,75 +31,27 @@ export function CoursePlanner() {
   const [searchTerm, setSearchTerm] = useState("");
   const coursesPerPage = 10;
 
+  const loadCourses = async () => {
+    try {
+      const response = await fetch("/cou1002.xlsx");
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+
+      // Get the first sheet
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const courseData = XLSX.utils.sheet_to_json(worksheet);
+
+      setCourses(courseData as Course[]);
+    } catch (error) {
+      console.error("Error loading courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadCourses = async () => {
-      try {
-        const response = await fetch("/cou1002.xlsx");
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-
-        // Get the first sheet
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-
-        // Convert to JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        const filteredCourses: Course[] = (jsonData as ExcelRow[])
-          .map((row: ExcelRow) => {
-            const cleanCourseName = filterChinese(
-              row.cou_cname?.toString() || ""
-            );
-
-            const cleanTeacherName = filterChinese(
-              row.tea_cname?.toString() || ""
-            );
-
-            const classroom =
-              row.clsrom_1 ||
-              row.clsrom_2 ||
-              row.clsrom_3 ||
-              row.clsrom_4 ||
-              row.clsrom_5 ||
-              row.clsrom_6 ||
-              "";
-            const cleanClassroom = filterChineseAndNumbers(
-              classroom.toString()
-            );
-
-            let day = 0;
-            let time = "";
-
-            for (let i = 1; i <= 5; i++) {
-              const dayKey = `day${i}` as keyof ExcelRow;
-              const dayValue = row[dayKey]?.toString();
-              if (dayValue && dayValue.trim() !== "") {
-                day = i;
-                time = dayValue;
-                break;
-              }
-            }
-
-            return {
-              ser_no: row.ser_no?.toString() || "",
-              cou_cname: cleanCourseName,
-              tea_cname: cleanTeacherName,
-              credit: row.credit?.toString() || "",
-              day,
-              time,
-              classroom: cleanClassroom,
-            };
-          })
-          .filter(course => course.cou_cname && course.tea_cname);
-
-        setCourses(filteredCourses);
-      } catch (error) {
-        console.error("Error loading courses:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadCourses();
   }, []);
 
@@ -176,7 +122,6 @@ export function CoursePlanner() {
                         variant="outline"
                         className="text-sm text-gray-600 w-fit"
                       >
-                        {["一", "二", "三", "四", "五"][course.day - 1]}{" "}
                         {course.time}
                       </Badge>
                     )}
