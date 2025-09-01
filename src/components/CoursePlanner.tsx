@@ -203,12 +203,10 @@ export function CoursePlanner() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({ length: 14 }, (_, rowIndex) => (
+                    {Array.from({ length: 10 }, (_, rowIndex) => (
                       <tr key={rowIndex}>
                         <td className="border border-gray-300 p-2 bg-gray-50 font-medium">
-                          {rowIndex + 1 > 10
-                            ? String.fromCharCode(65 + rowIndex - 10)
-                            : rowIndex + 1}
+                          {rowIndex + 1}
                         </td>
                         {Array.from({ length: 6 }, (_, colIndex) => {
                           const cellKey = getCellKey(rowIndex, colIndex);
@@ -240,7 +238,15 @@ export function CoursePlanner() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedCells(new Set());
+                  }}
+                >
+                  Clear
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
