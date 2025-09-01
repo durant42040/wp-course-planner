@@ -43,6 +43,8 @@ export function CoursePlanner() {
     row: number;
     col: number;
   } | null>(null);
+  const [savedCourses, setSavedCourses] = useState<Course[]>([]);
+  const [showMyCourses, setShowMyCourses] = useState(false);
   const coursesPerPage = 10;
 
   const loadCourses = async () => {
@@ -67,6 +69,11 @@ export function CoursePlanner() {
 
   useEffect(() => {
     loadCourses();
+    // Load saved courses from localStorage
+    const saved = localStorage.getItem("savedCourses");
+    if (saved) {
+      setSavedCourses(JSON.parse(saved));
+    }
   }, []);
 
   const getCellKey = (row: number, col: number) => `${row}-${col}`;
@@ -113,6 +120,27 @@ export function CoursePlanner() {
     setDragStart(null);
   };
 
+  const handleAddCourse = (course: Course) => {
+    // Check if course is already saved
+    const isAlreadySaved = savedCourses.some(
+      saved => saved.ser_no === course.ser_no
+    );
+
+    if (!isAlreadySaved) {
+      const newSavedCourses = [...savedCourses, course];
+      setSavedCourses(newSavedCourses);
+      localStorage.setItem("savedCourses", JSON.stringify(newSavedCourses));
+    }
+  };
+
+  const handleRemoveCourse = (courseToRemove: Course) => {
+    const newSavedCourses = savedCourses.filter(
+      course => course.ser_no !== courseToRemove.ser_no
+    );
+    setSavedCourses(newSavedCourses);
+    localStorage.setItem("savedCourses", JSON.stringify(newSavedCourses));
+  };
+
   const filteredCourses = courses.filter(course => {
     // Search filter
     const matchesSearch =
@@ -151,185 +179,234 @@ export function CoursePlanner() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Course Planner
-        </h1>
+        <div className="relative flex items-center mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 flex-1 text-center">
+            Course Planner
+          </h1>
+          <Button
+            variant="outline"
+            onClick={() => setShowMyCourses(!showMyCourses)}
+            className="absolute right-0"
+          >
+            My Courses ({savedCourses.length})
+          </Button>
+        </div>
         <p className="text-lg text-gray-600">
-          Plan your academic journey with our comprehensive course catalog
+          {showMyCourses
+            ? "Your saved courses"
+            : "Plan your academic journey with our comprehensive course catalog"}
         </p>
       </div>
 
       {/* Search Input and Filter */}
-      <div className="mb-6 max-w-2xl mx-auto">
-        <div className="flex gap-4 items-center">
-          <Input
-            type="text"
-            placeholder="Search course name, teacher, serial number, or classroom"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="flex-1"
-          />
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant={"outline"}>Filter by Time</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl bg-white">
-              <DialogHeader>
-                <DialogTitle>Filter By Time</DialogTitle>
-              </DialogHeader>
-              <div className="overflow-auto max-h-[500px] bg-white rounded-lg border border-gray-300">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="border border-gray-300 bg-gray-50 rounded-tl-lg"></th>
-                      <th className="border border-gray-300 p-2 bg-gray-50">
-                        一
-                      </th>
-                      <th className="border border-gray-300 p-2 bg-gray-50">
-                        二
-                      </th>
-                      <th className="border border-gray-300 p-2 bg-gray-50">
-                        三
-                      </th>
-                      <th className="border border-gray-300 p-2 bg-gray-50">
-                        四
-                      </th>
-                      <th className="border border-gray-300 p-2 bg-gray-50">
-                        五
-                      </th>
-                      <th className="border border-gray-300 p-2 bg-gray-50 rounded-tr-lg">
-                        六
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({ length: 10 }, (_, rowIndex) => (
-                      <tr key={rowIndex}>
-                        <td className="border border-gray-300 p-2 bg-gray-50 font-medium">
-                          {rowIndex + 1}
-                        </td>
-                        {Array.from({ length: 6 }, (_, colIndex) => {
-                          const cellKey = getCellKey(rowIndex, colIndex);
-                          const isSelected = selectedCells.has(cellKey);
-                          return (
-                            <td
-                              key={colIndex}
-                              className={`border border-gray-300 p-2 cursor-pointer select-none ${
-                                isSelected ? "bg-blue-200" : "hover:bg-gray-100"
-                              } ${
-                                rowIndex === 13 && colIndex === 5
-                                  ? "rounded-br-lg"
-                                  : ""
-                              } ${rowIndex === 13 && colIndex === 0 ? "rounded-bl-lg" : ""}`}
-                              onMouseDown={() =>
-                                handleCellMouseDown(rowIndex, colIndex)
-                              }
-                              onMouseEnter={() =>
-                                handleCellMouseEnter(rowIndex, colIndex)
-                              }
-                              onMouseUp={handleCellMouseUp}
-                            >
-                              {/* Empty cell content */}
-                            </td>
-                          );
-                        })}
+      {!showMyCourses && (
+        <div className="mb-6 max-w-2xl mx-auto">
+          <div className="flex gap-4 items-center">
+            <Input
+              type="text"
+              placeholder="Search course name, teacher, serial number, or classroom"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant={"outline"}>Filter by Time</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl bg-white">
+                <DialogHeader>
+                  <DialogTitle>Filter By Time</DialogTitle>
+                </DialogHeader>
+                <div className="overflow-auto max-h-[500px] bg-white rounded-lg border border-gray-300">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="border border-gray-300 bg-gray-50 rounded-tl-lg"></th>
+                        <th className="border border-gray-300 p-2 bg-gray-50">
+                          一
+                        </th>
+                        <th className="border border-gray-300 p-2 bg-gray-50">
+                          二
+                        </th>
+                        <th className="border border-gray-300 p-2 bg-gray-50">
+                          三
+                        </th>
+                        <th className="border border-gray-300 p-2 bg-gray-50">
+                          四
+                        </th>
+                        <th className="border border-gray-300 p-2 bg-gray-50">
+                          五
+                        </th>
+                        <th className="border border-gray-300 p-2 bg-gray-50 rounded-tr-lg">
+                          六
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedCells(new Set());
-                  }}
-                >
-                  Clear
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                  }}
-                >
-                  Filter
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {currentCourses.map((course, index) => (
-          <Card
-            key={startIndex + index}
-            className="hover:shadow-lg transition-shadow duration-200"
-          >
-            <CardContent className="p-3">
-              <div className="grid grid-cols-12 gap-3 items-center">
-                <div className="col-span-6">
-                  <h3 className="font-semibold text-lg">{course.cou_cname}</h3>
-                  <div className="flex flex-col gap-1 mt-1">
-                    {course.day !== 0 && course.time && (
-                      <Badge
-                        variant="outline"
-                        className="text-sm text-gray-600 w-fit"
-                      >
-                        {["一", "二", "三", "四", "五", "六"][course.day - 1]}{" "}
-                        {course.time}
-                      </Badge>
-                    )}
-                    {course.classroom && (
-                      <Badge
-                        variant="outline"
-                        className="text-sm text-gray-500 w-fit"
-                      >
-                        {course.classroom}
-                      </Badge>
-                    )}
-                    <div className="flex gap-2 sm:hidden mt-2">
-                      <Button variant="outline" size="sm">
-                        Add
-                      </Button>
-                    </div>
-                  </div>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 10 }, (_, rowIndex) => (
+                        <tr key={rowIndex}>
+                          <td className="border border-gray-300 p-2 bg-gray-50 font-medium">
+                            {rowIndex + 1}
+                          </td>
+                          {Array.from({ length: 6 }, (_, colIndex) => {
+                            const cellKey = getCellKey(rowIndex, colIndex);
+                            const isSelected = selectedCells.has(cellKey);
+                            return (
+                              <td
+                                key={colIndex}
+                                className={`border border-gray-300 p-2 cursor-pointer select-none ${
+                                  isSelected
+                                    ? "bg-blue-200"
+                                    : "hover:bg-gray-100"
+                                } ${
+                                  rowIndex === 13 && colIndex === 5
+                                    ? "rounded-br-lg"
+                                    : ""
+                                } ${rowIndex === 13 && colIndex === 0 ? "rounded-bl-lg" : ""}`}
+                                onMouseDown={() =>
+                                  handleCellMouseDown(rowIndex, colIndex)
+                                }
+                                onMouseEnter={() =>
+                                  handleCellMouseEnter(rowIndex, colIndex)
+                                }
+                                onMouseUp={handleCellMouseUp}
+                              >
+                                {/* Empty cell content */}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="col-span-3 flex flex-col gap-1">
-                  <Badge variant="secondary" className="text-sm w-fit">
-                    流水號：{course.ser_no}
-                  </Badge>
-                  <Badge variant="outline" className="text-sm">
-                    授課教師：{course.tea_cname}
-                  </Badge>
-                  <Badge variant="outline" className="text-sm w-fit">
-                    學分：{course.credit}
-                  </Badge>
-                </div>
-                <div className="col-span-3 hidden sm:flex gap-2">
-                  <Button variant="outline" size="sm">
-                    Add
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedCells(new Set());
+                    }}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsDialogOpen(false);
+                    }}
+                  >
+                    Filter
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {(showMyCourses ? savedCourses : currentCourses).map(
+          (course, index) => (
+            <Card
+              key={startIndex + index}
+              className="hover:shadow-lg transition-shadow duration-200"
+            >
+              <CardContent className="p-3">
+                <div className="grid grid-cols-12 gap-3 items-center">
+                  <div className="col-span-6">
+                    <h3 className="font-semibold text-lg">
+                      {course.cou_cname}
+                    </h3>
+                    <div className="flex flex-col gap-1 mt-1">
+                      {course.day !== 0 && course.time && (
+                        <Badge
+                          variant="outline"
+                          className="text-sm text-gray-600 w-fit"
+                        >
+                          {["一", "二", "三", "四", "五", "六"][course.day - 1]}{" "}
+                          {course.time}
+                        </Badge>
+                      )}
+                      {course.classroom && (
+                        <Badge
+                          variant="outline"
+                          className="text-sm text-gray-500 w-fit"
+                        >
+                          {course.classroom}
+                        </Badge>
+                      )}
+                      <div className="flex gap-2 sm:hidden mt-2">
+                        {showMyCourses ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveCourse(course)}
+                          >
+                            Remove
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAddCourse(course)}
+                          >
+                            Add
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-span-3 flex flex-col gap-1">
+                    <Badge variant="secondary" className="text-sm w-fit">
+                      流水號：{course.ser_no}
+                    </Badge>
+                    <Badge variant="outline" className="text-sm">
+                      授課教師：{course.tea_cname}
+                    </Badge>
+                    <Badge variant="outline" className="text-sm w-fit">
+                      學分：{course.credit}
+                    </Badge>
+                  </div>
+                  <div className="col-span-3 hidden sm:flex gap-2">
+                    {showMyCourses ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveCourse(course)}
+                      >
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddCourse(course)}
+                      >
+                        Add
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        )}
       </div>
 
-      {filteredCourses.length === 0 && (
+      {(showMyCourses ? savedCourses : filteredCourses).length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            {searchTerm
-              ? `No courses found matching "${searchTerm}"`
-              : "No courses found"}
+            {showMyCourses
+              ? "No saved courses yet. Add some courses to see them here!"
+              : searchTerm
+                ? `No courses found matching "${searchTerm}"`
+                : "No courses found"}
           </p>
         </div>
       )}
 
       {/* Pagination */}
-      {filteredCourses.length > 0 && (
+      {!showMyCourses && filteredCourses.length > 0 && (
         <Pagination className="mt-8">
           <PaginationContent>
             <PaginationItem>
