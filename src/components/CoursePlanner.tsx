@@ -6,6 +6,13 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Spinner } from "./ui/shadcn-io/spinner";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -29,6 +36,13 @@ export function CoursePlanner() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{
+    row: number;
+    col: number;
+  } | null>(null);
   const coursesPerPage = 10;
 
   const loadCourses = async () => {
@@ -55,13 +69,52 @@ export function CoursePlanner() {
     loadCourses();
   }, []);
 
-  const filteredCourses = courses.filter(
-    course =>
+  useEffect(() => {
+    console.log(selectedCells);
+  }, [selectedCells]);
+
+  const getCellKey = (row: number, col: number) => `${row}-${col}`;
+
+  const handleCellMouseDown = (row: number, col: number) => {
+    setIsDragging(true);
+    setDragStart({ row, col });
+    setSelectedCells(new Set([getCellKey(row, col)]));
+  };
+
+  const handleCellMouseEnter = (row: number, col: number) => {
+    if (isDragging && dragStart) {
+      const newSelection = new Set<string>();
+      const startRow = Math.min(dragStart.row, row);
+      const endRow = Math.max(dragStart.row, row);
+      const startCol = Math.min(dragStart.col, col);
+      const endCol = Math.max(dragStart.col, col);
+
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          newSelection.add(getCellKey(r, c));
+        }
+      }
+      setSelectedCells(newSelection);
+    }
+  };
+
+  const handleCellMouseUp = () => {
+    setIsDragging(false);
+    setDragStart(null);
+  };
+
+  const filteredCourses = courses.filter(course => {
+    // Search filter
+    const matchesSearch =
       course.cou_cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.tea_cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.ser_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.classroom.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      course.classroom.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Time filter - only show courses that have time information
+
+    return matchesSearch;
+  });
 
   const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
   const startIndex = (currentPage - 1) * coursesPerPage;
@@ -96,15 +149,104 @@ export function CoursePlanner() {
         </p>
       </div>
 
-      {/* Search Input */}
-      <div className="mb-6 max-w-md mx-auto">
-        <Input
-          type="text"
-          placeholder="Search course name, teacher, serial number, or classroom"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="w-full"
-        />
+      {/* Search Input and Filter */}
+      <div className="mb-6 max-w-2xl mx-auto">
+        <div className="flex gap-4 items-center">
+          <Input
+            type="text"
+            placeholder="Search course name, teacher, serial number, or classroom"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="flex-1"
+          />
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant={"outline"}>Filter by Time</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl bg-white">
+              <DialogHeader>
+                <DialogTitle>Filter By Time</DialogTitle>
+              </DialogHeader>
+              <div className="overflow-auto max-h-[500px] bg-white rounded-lg border border-gray-300">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="border border-gray-300 bg-gray-50 rounded-tl-lg"></th>
+                      <th className="border border-gray-300 p-2 bg-gray-50">
+                        一
+                      </th>
+                      <th className="border border-gray-300 p-2 bg-gray-50">
+                        二
+                      </th>
+                      <th className="border border-gray-300 p-2 bg-gray-50">
+                        三
+                      </th>
+                      <th className="border border-gray-300 p-2 bg-gray-50">
+                        四
+                      </th>
+                      <th className="border border-gray-300 p-2 bg-gray-50">
+                        五
+                      </th>
+                      <th className="border border-gray-300 p-2 bg-gray-50 rounded-tr-lg">
+                        六
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 14 }, (_, rowIndex) => (
+                      <tr key={rowIndex}>
+                        <td className="border border-gray-300 p-2 bg-gray-50 font-medium">
+                          {rowIndex + 1 > 10
+                            ? String.fromCharCode(65 + rowIndex - 10)
+                            : rowIndex + 1}
+                        </td>
+                        {Array.from({ length: 6 }, (_, colIndex) => {
+                          const cellKey = getCellKey(rowIndex, colIndex);
+                          const isSelected = selectedCells.has(cellKey);
+                          return (
+                            <td
+                              key={colIndex}
+                              className={`border border-gray-300 p-2 cursor-pointer select-none ${
+                                isSelected ? "bg-blue-200" : "hover:bg-gray-100"
+                              } ${
+                                rowIndex === 13 && colIndex === 5
+                                  ? "rounded-br-lg"
+                                  : ""
+                              } ${rowIndex === 13 && colIndex === 0 ? "rounded-bl-lg" : ""}`}
+                              onMouseDown={() =>
+                                handleCellMouseDown(rowIndex, colIndex)
+                              }
+                              onMouseEnter={() =>
+                                handleCellMouseEnter(rowIndex, colIndex)
+                              }
+                              onMouseUp={handleCellMouseUp}
+                            >
+                              {/* Empty cell content */}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex justify-end mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    console.log(
+                      "Filtering with selected cells:",
+                      selectedCells
+                    );
+                    setIsDialogOpen(false);
+                  }}
+                >
+                  Filter
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -123,6 +265,7 @@ export function CoursePlanner() {
                         variant="outline"
                         className="text-sm text-gray-600 w-fit"
                       >
+                        {["一", "二", "三", "四", "五", "六"][course.day - 1]}{" "}
                         {course.time}
                       </Badge>
                     )}
