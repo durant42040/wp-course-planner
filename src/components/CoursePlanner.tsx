@@ -69,11 +69,21 @@ export function CoursePlanner() {
     loadCourses();
   }, []);
 
-  useEffect(() => {
-    console.log(selectedCells);
-  }, [selectedCells]);
-
   const getCellKey = (row: number, col: number) => `${row}-${col}`;
+
+  const timeFilter = (course: Course, selectedCells: Set<string>) => {
+    if (selectedCells.size === 0) {
+      return true;
+    }
+
+    for (const time of course.time.split("")) {
+      const cellKey = getCellKey(parseInt(time) - 1, course.day - 1);
+      if (selectedCells.has(cellKey)) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   const handleCellMouseDown = (row: number, col: number) => {
     setIsDragging(true);
@@ -111,9 +121,9 @@ export function CoursePlanner() {
       course.ser_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.classroom.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Time filter - only show courses that have time information
+    const matchesTime = timeFilter(course, selectedCells);
 
-    return matchesSearch;
+    return matchesSearch && matchesTime;
   });
 
   const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
@@ -234,10 +244,6 @@ export function CoursePlanner() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    console.log(
-                      "Filtering with selected cells:",
-                      selectedCells
-                    );
                     setIsDialogOpen(false);
                   }}
                 >
@@ -307,7 +313,7 @@ export function CoursePlanner() {
           <p className="text-gray-500 text-lg">
             {searchTerm
               ? `No courses found matching "${searchTerm}"`
-              : "No courses found. Please check the Excel file."}
+              : "No courses found"}
           </p>
         </div>
       )}
