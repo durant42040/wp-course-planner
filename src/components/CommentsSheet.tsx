@@ -43,7 +43,6 @@ export function CommentsSheet({ courseId, courseName }: CommentsSheetProps) {
   useEffect(() => {
     if (comments.length > 0) {
       localStorage.setItem(`comments_${courseId}`, JSON.stringify(comments));
-      console.log("comments", comments);
     }
   }, [comments]);
 
