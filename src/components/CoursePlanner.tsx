@@ -188,7 +188,9 @@ export function CoursePlanner() {
             onClick={() => setShowMyCourses(!showMyCourses)}
             className="absolute right-0"
           >
-            My Courses ({savedCourses.length})
+            {showMyCourses
+              ? "All Courses"
+              : `My Courses (${savedCourses.length})`}
           </Button>
         </div>
         <p className="text-lg text-gray-600">
@@ -341,6 +343,7 @@ export function CoursePlanner() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleRemoveCourse(course)}
+                            className="hover:bg-gray-200 hover:border-gray-300"
                           >
                             Remove
                           </Button>
@@ -349,6 +352,7 @@ export function CoursePlanner() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleAddCourse(course)}
+                            className="hover:bg-gray-200 hover:border-gray-300"
                           >
                             Add
                           </Button>
@@ -373,6 +377,7 @@ export function CoursePlanner() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemoveCourse(course)}
+                        className="hover:bg-gray-200 hover:border-gray-300"
                       >
                         Remove
                       </Button>
@@ -381,6 +386,7 @@ export function CoursePlanner() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleAddCourse(course)}
+                        className="hover:bg-gray-200 hover:border-gray-300"
                       >
                         Add
                       </Button>
