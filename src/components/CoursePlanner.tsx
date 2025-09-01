@@ -59,7 +59,8 @@ export function CoursePlanner() {
     course =>
       course.cou_cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.tea_cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.ser_no.toLowerCase().includes(searchTerm.toLowerCase())
+      course.ser_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.classroom.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
@@ -99,7 +100,7 @@ export function CoursePlanner() {
       <div className="mb-6 max-w-md mx-auto">
         <Input
           type="text"
-          placeholder="Search course name, teacher, or serial number"
+          placeholder="Search course name, teacher, serial number, or classroom"
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className="w-full"
