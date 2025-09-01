@@ -1,0 +1,139 @@
+import { useState, useEffect } from "react";
+import { MessageSquare, Plus, Trash2 } from "lucide-react";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
+import { Card, CardContent } from "./ui/card";
+
+interface Comment {
+  id: string;
+  text: string;
+  timestamp: number;
+}
+
+interface CommentsSheetProps {
+  courseId: string;
+  courseName: string;
+}
+
+export function CommentsSheet({ courseId, courseName }: CommentsSheetProps) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Load comments from localStorage when component mounts or courseId changes
+  useEffect(() => {
+    console.log(`comments_${courseId}`);
+    const savedComments = localStorage.getItem(`comments_${courseId}`);
+    if (savedComments) {
+      setComments(JSON.parse(savedComments));
+    } else {
+      setComments([]);
+    }
+  }, [isOpen]);
+
+  // Save comments to localStorage whenever comments change
+  useEffect(() => {
+    if (comments.length > 0) {
+      localStorage.setItem(`comments_${courseId}`, JSON.stringify(comments));
+      console.log("comments", comments);
+    }
+  }, [comments]);
+
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      const comment: Comment = {
+        id: Date.now().toString(),
+        text: newComment.trim(),
+        timestamp: Date.now(),
+      };
+      setComments(prev => [comment, ...prev]);
+      setNewComment("");
+    }
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    setComments(prev => prev.filter(comment => comment.id !== commentId));
+  };
+
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  return (
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hover:bg-gray-200 h-6 w-6 p-0"
+        >
+          <MessageSquare className="h-3 w-3" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="w-[400px] sm:w-[540px] bg-white">
+        <SheetHeader>
+          <SheetTitle>Comments for {courseName}</SheetTitle>
+          <SheetDescription>
+            Add your thoughts and experiences about this course.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-6 space-y-4 px-4">
+          {/* Add new comment */}
+          <div className="space-y-2">
+            <Textarea
+              placeholder="Write your comment here..."
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              className="min-h-[100px]"
+            />
+            <Button
+              onClick={handleAddComment}
+              disabled={!newComment.trim()}
+              className="w-full"
+              variant="outline"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Comment
+            </Button>
+          </div>
+
+          {/* Comments list */}
+          <div className="space-y-3">
+            {comments.length !== 0 &&
+              comments.map(comment => (
+                <Card key={comment.id} className="relative">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="text-sm text-gray-500">
+                        {formatTimestamp(comment.timestamp)}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {comment.text}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

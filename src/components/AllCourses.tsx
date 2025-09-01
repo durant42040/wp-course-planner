@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { CommentsSheet } from "./CommentsSheet";
 import {
   Pagination,
   PaginationContent,
@@ -106,7 +107,7 @@ export function AllCourses({
                         {course.classroom}
                       </Badge>
                     )}
-                    <div className="flex gap-2 sm:hidden mt-2">
+                    <div className="flex gap-2 sm:hidden mt-2 items-center">
                       <Button
                         variant="outline"
                         size="sm"
@@ -115,10 +116,26 @@ export function AllCourses({
                       >
                         Add
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const searchQuery = `${course.cou_cname} ${course.tea_cname}`;
+                          const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                          window.open(googleUrl, "_blank");
+                        }}
+                        className="hover:bg-gray-200 hover:border-gray-300"
+                      >
+                        Google
+                      </Button>
+                      <CommentsSheet
+                        courseId={course.ser_no}
+                        courseName={course.cou_cname}
+                      />
                     </div>
                   </div>
                 </div>
-                <div className="col-span-3 flex flex-col gap-1">
+                <div className="col-span-3 flex flex-col gap-1 ml-4">
                   <Badge variant="secondary" className="text-sm w-fit">
                     流水號：{course.ser_no}
                   </Badge>
@@ -129,7 +146,7 @@ export function AllCourses({
                     學分：{course.credit}
                   </Badge>
                 </div>
-                <div className="col-span-3 hidden sm:flex gap-2">
+                <div className="col-span-3 hidden sm:flex gap-2 items-center">
                   <Button
                     variant="outline"
                     size="sm"
@@ -138,6 +155,22 @@ export function AllCourses({
                   >
                     Add
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const searchQuery = `${course.cou_cname} ${course.tea_cname}`;
+                      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                      window.open(googleUrl, "_blank");
+                    }}
+                    className="hover:bg-gray-200 hover:border-gray-300"
+                  >
+                    Google
+                  </Button>
+                  <CommentsSheet
+                    courseId={course.ser_no}
+                    courseName={course.cou_cname}
+                  />
                 </div>
               </div>
             </CardContent>
