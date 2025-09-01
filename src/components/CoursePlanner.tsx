@@ -289,6 +289,11 @@ export function CoursePlanner() {
                         {course.classroom}
                       </Badge>
                     )}
+                    <div className="flex gap-2 sm:hidden mt-2">
+                      <Button variant="outline" size="sm">
+                        Add
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="col-span-3 flex flex-col gap-1">
@@ -302,11 +307,10 @@ export function CoursePlanner() {
                     學分：{course.credit}
                   </Badge>
                 </div>
-                <div className="col-span-3 flex gap-2">
+                <div className="col-span-3 hidden sm:flex gap-2">
                   <Button variant="outline" size="sm">
-                    View
+                    Add
                   </Button>
-                  <Button size="sm">Add</Button>
                 </div>
               </div>
             </CardContent>
