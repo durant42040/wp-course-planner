@@ -41,6 +41,34 @@ function groupContiguousPeriods(
 }
 
 export function CalendarView({ courses }: CalendarViewProps) {
+  // Simple deterministic color palette
+  const palette: Array<{ bg: string; border: string }> = [
+    { bg: "#fee2e2", border: "#fecaca" }, // red-100/200
+    { bg: "#ffedd5", border: "#fed7aa" }, // orange-100/200
+    { bg: "#fef3c7", border: "#fde68a" }, // amber-100/200
+    { bg: "#ecfccb", border: "#d9f99d" }, // lime-100/200
+    { bg: "#dcfce7", border: "#bbf7d0" }, // green-100/200
+    { bg: "#ccfbf1", border: "#99f6e4" }, // teal-100/200
+    { bg: "#e0f2fe", border: "#bae6fd" }, // sky-100/200
+    { bg: "#dbeafe", border: "#bfdbfe" }, // blue-100/200
+    { bg: "#ede9fe", border: "#ddd6fe" }, // violet-100/200
+    { bg: "#fae8ff", border: "#f5d0fe" }, // fuchsia-100/200
+  ];
+
+  const hashString = (value: string): number => {
+    let hash = 0;
+    for (let i = 0; i < value.length; i++) {
+      hash = (hash << 5) - hash + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  };
+
+  const getCourseColors = (course: Course) => {
+    const key = course.ser_no || `${course.cou_cname}-${course.tea_cname}`;
+    const idx = hashString(key) % palette.length;
+    return palette[idx];
+  };
   // Build blocks per day
   const dayToBlocks: Record<number, TimeBlock[]> = {
     1: [],
@@ -66,16 +94,6 @@ export function CalendarView({ courses }: CalendarViewProps) {
   const dayLabels = ["一", "二", "三", "四", "五", "六"]; // 1..6
   const totalPeriods = 10; // rows 1..10
 
-  // For rendering rowSpans, track occupied cells per day/row
-  const occupied: Record<number, Set<number>> = {
-    1: new Set(),
-    2: new Set(),
-    3: new Set(),
-    4: new Set(),
-    5: new Set(),
-    6: new Set(),
-  };
-
   return (
     <div className="overflow-auto rounded-lg border border-gray-300">
       <table className="w-full table-fixed border-collapse">
@@ -99,50 +117,44 @@ export function CalendarView({ courses }: CalendarViewProps) {
                 {period}
               </td>
               {Array.from({ length: 6 }, (_, dIdx) => dIdx + 1).map(day => {
-                // If this cell is occupied by a previous rowSpan, skip rendering a td
-                if (occupied[day].has(period)) {
-                  return null;
-                }
-                // Find a block that starts at this period
-                const blocks = dayToBlocks[day];
-                const block = blocks?.find(b => b.start === period);
-                if (block) {
-                  // Mark subsequent periods as occupied
-                  for (let p = period + 1; p <= period + block.span - 1; p++) {
-                    occupied[day].add(p);
-                  }
-                  const c = block.course;
-                  return (
-                    <td
-                      key={day}
-                      className="border border-gray-300 align-top p-1 w-40"
-                      rowSpan={block.span}
-                    >
-                      <div
-                        className="rounded-md bg-blue-50 border border-blue-200 p-2 h-full"
-                        style={{ minHeight: `${block.span * 4}rem` }}
-                      >
-                        <div className="text-sm font-semibold truncate">
-                          {c.cou_cname}
-                        </div>
-                        <div className="text-xs text-gray-600 mt-0.5 truncate">
-                          {c.tea_cname}
-                        </div>
-                        {c.classroom && (
-                          <div className="text-xs text-gray-500 mt-0.5 truncate">
-                            {c.classroom}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  );
-                }
-                // Empty cell
+                const blocks = dayToBlocks[day] ?? [];
+                const activeBlocks = blocks.filter(
+                  b => b.start <= period && period < b.start + b.span
+                );
                 return (
                   <td
                     key={day}
-                    className="border border-gray-300 p-1 w-40 h-16"
-                  ></td>
+                    className="border border-gray-300 p-1 w-40 h-16 align-top"
+                  >
+                    {activeBlocks.length > 0 ? (
+                      <div className="flex flex-col gap-1 h-full w-full">
+                        {activeBlocks.map((blk, idx) => {
+                          const c = blk.course;
+                          const colors = getCourseColors(c);
+                          return (
+                            <div
+                              key={`${c.ser_no}-${idx}`}
+                              className="w-full px-2 py-1 h-8 border"
+                              style={{
+                                backgroundColor: colors.bg,
+                                borderColor: colors.border,
+                                borderRadius: 0,
+                              }}
+                            >
+                              <div className="flex items-center gap-1 text-xs truncate">
+                                <span className="font-semibold truncate">
+                                  {c.cou_cname}
+                                </span>
+                                <span className="text-[10px] text-gray-600 truncate">
+                                  {c.tea_cname}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </td>
                 );
               })}
             </tr>
