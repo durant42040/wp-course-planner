@@ -38,7 +38,7 @@ export function CourseCard({
                   variant="outline"
                   className="text-sm text-gray-600 w-fit"
                 >
-                  {course.time}
+                  {`${["一", "二", "三", "四", "五", "六"][course.day - 1]} ${course.time}`}
                 </Badge>
               )}
               {course.classroom && (
