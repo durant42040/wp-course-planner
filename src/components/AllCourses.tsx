@@ -33,8 +33,20 @@ export function AllCourses({
       return true;
     }
 
-    for (const time of course.time.split("")) {
-      const cellKey = getCellKey(parseInt(time) - 1, course.day - 1);
+    const charToRowIndex = (ch: string): number | null => {
+      if (ch === "0") return 9; // 10th period -> row index 9
+      const digit = parseInt(ch, 10);
+      if (!Number.isNaN(digit) && digit >= 1 && digit <= 9) return digit - 1;
+      const map: Record<string, number> = { A: 10, B: 11, C: 12, D: 13 };
+      const upper = ch.toUpperCase();
+      if (upper in map) return map[upper];
+      return null;
+    };
+
+    for (const ch of course.time.split("")) {
+      const rowIndex = charToRowIndex(ch);
+      if (rowIndex === null) continue;
+      const cellKey = getCellKey(rowIndex, course.day - 1);
       if (selectedCells.has(cellKey)) {
         return true;
       }

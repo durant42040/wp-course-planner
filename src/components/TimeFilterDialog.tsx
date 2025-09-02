@@ -79,10 +79,12 @@ export function TimeFilterDialog({
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 10 }, (_, rowIndex) => (
+              {Array.from({ length: 14 }, (_, rowIndex) => (
                 <tr key={rowIndex}>
                   <td className="border border-gray-300 p-2 bg-gray-50 font-medium">
-                    {rowIndex + 1}
+                    {rowIndex < 10
+                      ? rowIndex + 1
+                      : ["A", "B", "C", "D"][rowIndex - 10]}
                   </td>
                   {Array.from({ length: 6 }, (_, colIndex) => {
                     const cellKey = getCellKey(rowIndex, colIndex);
@@ -92,11 +94,7 @@ export function TimeFilterDialog({
                         key={colIndex}
                         className={`border border-gray-300 p-2 cursor-pointer select-none ${
                           isSelected ? "bg-blue-200" : "hover:bg-gray-100"
-                        } ${
-                          rowIndex === 13 && colIndex === 5
-                            ? "rounded-br-lg"
-                            : ""
-                        } ${rowIndex === 13 && colIndex === 0 ? "rounded-bl-lg" : ""}`}
+                        } ${rowIndex === 13 && colIndex === 5 ? "rounded-br-lg" : ""} ${rowIndex === 13 && colIndex === 0 ? "rounded-bl-lg" : ""}`}
                         onMouseDown={() =>
                           handleCellMouseDown(rowIndex, colIndex)
                         }

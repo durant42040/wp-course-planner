@@ -81,10 +81,15 @@ export function CalendarView({ courses }: CalendarViewProps) {
 
   courses.forEach(course => {
     if (!course.day || !course.time) return;
-    const periods: number[] = course.time
-      .split("")
-      .map(p => parseInt(p, 10))
-      .filter(n => !Number.isNaN(n));
+    const periods: number[] = course.time.split("").flatMap(ch => {
+      if (ch === "0") return [10]; // map 0 -> 10th period
+      const digit = parseInt(ch, 10);
+      if (!Number.isNaN(digit) && digit >= 1 && digit <= 9) return [digit];
+      const map: Record<string, number> = { A: 11, B: 12, C: 13, D: 14 };
+      const upper = ch.toUpperCase();
+      if (upper in map) return [map[upper]];
+      return [];
+    });
     const groups = groupContiguousPeriods(periods);
     for (const g of groups) {
       dayToBlocks[course.day]?.push({ start: g.start, span: g.span, course });
@@ -92,7 +97,7 @@ export function CalendarView({ courses }: CalendarViewProps) {
   });
 
   const dayLabels = ["一", "二", "三", "四", "五", "六"]; // 1..6
-  const totalPeriods = 10; // rows 1..10
+  const totalPeriods = 14; // 1..10 then A..D
 
   return (
     <div className="overflow-auto rounded-lg border border-gray-300">
@@ -114,7 +119,7 @@ export function CalendarView({ courses }: CalendarViewProps) {
           {Array.from({ length: totalPeriods }, (_, i) => i + 1).map(period => (
             <tr key={period}>
               <td className="border border-gray-300 p-2 bg-gray-50 font-medium w-12 h-16 text-center align-middle">
-                {period}
+                {period <= 10 ? period : ["A", "B", "C", "D"][period - 11]}
               </td>
               {Array.from({ length: 6 }, (_, dIdx) => dIdx + 1).map(day => {
                 const blocks = dayToBlocks[day] ?? [];
