@@ -69,18 +69,20 @@ export function CourseCard({
                     Add
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const searchQuery = `${course.cou_cname} ${course.tea_cname}`;
-                    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-                    window.open(googleUrl, "_blank");
-                  }}
-                  className="hover:bg-gray-200 hover:border-gray-300"
-                >
-                  Google
-                </Button>
+                {!showMyCourses && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const searchQuery = `${course.cou_cname} ${course.tea_cname}`;
+                      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                      window.open(googleUrl, "_blank");
+                    }}
+                    className="hover:bg-gray-200 hover:border-gray-300"
+                  >
+                    Google
+                  </Button>
+                )}
                 <CommentsSheet
                   courseId={course.ser_no}
                   courseName={course.cou_cname}
@@ -119,18 +121,20 @@ export function CourseCard({
                 Add
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const searchQuery = `${course.cou_cname} ${course.tea_cname}`;
-                const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-                window.open(googleUrl, "_blank");
-              }}
-              className="hover:bg-gray-200 hover:border-gray-300"
-            >
-              Google
-            </Button>
+            {!showMyCourses && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const searchQuery = `${course.cou_cname} ${course.tea_cname}`;
+                  const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                  window.open(googleUrl, "_blank");
+                }}
+                className="hover:bg-gray-200 hover:border-gray-300"
+              >
+                Google
+              </Button>
+            )}
             <CommentsSheet
               courseId={course.ser_no}
               courseName={course.cou_cname}
